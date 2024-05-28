@@ -46,6 +46,7 @@ def get_db():
 class Job(Base):
     __tablename__ = "jobs"
     name = Column(String, unique=True, primary_key=True, index=True, nullable=False)
+    repo = Column(String, nullable=False)
     description = Column(String, nullable=True)
     on = Column(Boolean, default=True)
     cron_schedule = Column(String, nullable=True)
@@ -57,6 +58,7 @@ class Job(Base):
 # manual pydantic model
 class PDJob(BaseModel):
     name: str
+    repo: str
     description: str
     on: bool
     cron_schedule: str
@@ -77,7 +79,7 @@ class JobRun(Base):
     end_time = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
-
+    logs = Column(String, nullable=True)
     job = relationship("Job", back_populates="job_runs")
 
 
