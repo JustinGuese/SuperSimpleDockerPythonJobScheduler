@@ -1,5 +1,6 @@
 from datetime import datetime
 from os import environ
+from typing import Optional
 
 from pydantic import BaseModel
 from sqlalchemy import (
@@ -59,7 +60,7 @@ class Job(Base):
 class PDJob(BaseModel):
     name: str
     repo: str
-    description: str
+    description: Optional[str]
     on: bool
     cron_schedule: str
 
@@ -89,7 +90,8 @@ class PDJobRun(BaseModel):
     job_name: str
     status: str
     start_time: datetime
-    end_time: datetime
+    end_time: Optional[datetime]
+    logs: Optional[str]
 
     class Config:
         orm_mode = True

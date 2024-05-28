@@ -1,4 +1,4 @@
-src/workspace/*
+src/workspace/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

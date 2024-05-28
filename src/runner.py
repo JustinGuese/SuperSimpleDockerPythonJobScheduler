@@ -8,7 +8,14 @@ from api.db import Job, JobRun, PDJobRun, get_db
 WORKSPACE = environ.get("WORKSPACE", "/workspace")
 
 
-def runJob(job: Job):
+def runJob(jobRunId: int, job_name: str):
+    db = next(get_db())
+    jobRun = db.query(JobRun).filter(JobRun.id == jobRunId).first()
+    job = db.query(Job).filter(Job.name == job_name).first()
+    if jobRun is None:
+        raise Exception("Job Run not found: " + str(jobRunId))
+    jobRun.status = "running"
+    db.commit()
     reponame = job.repo.split("/")[-1].replace(".git", "")
     # git clone the repo into workspace
     # check if folder exists
@@ -44,11 +51,6 @@ def runJob(job: Job):
         cwd=f"{WORKSPACE}/{reponame}",
     )
     # run docker container
-    jobRun = JobRun(job_name=job.name, status="running", start_time=datetime.utcnow())
-    db = next(get_db())
-    db.add(jobRun)
-    db.commit()
-    db.refresh(jobRun)
     jobRunId = job.name.lower() + "_" + str(jobRun.id)
     try:
         check_call(
@@ -90,21 +92,22 @@ def runJob(job: Job):
         jobRun.logs += container_status.stdout.decode("utf-8").strip()
     jobRun.end_time = datetime.utcnow()
     db.commit()
+    db.refresh(jobRun)
     return PDJobRun.model_validate(jobRun.__dict__) if jobRun else None
 
 
-if __name__ == "__main__":
-    db = next(get_db())
-    TESTNAME = "exampleFlow"  # errorFlow
-    job = db.query(Job).filter(Job.name == TESTNAME).first()
-    if job is None:
-        job = Job(
-            name=TESTNAME,
-            repo="https://github.com/JustinGuese/SuperSimpleDockerPythonJobScheduler-JobTemplate.git",
-            cron_schedule="5 4 * * *",
-        )
-        db.add(job)
-        db.commit()
-        db.refresh(job)
-    print(job)
-    runJob(job)
+# if __name__ == "__main__":
+#     db = next(get_db())
+#     TESTNAME = "exampleFlow"  # errorFlow
+#     job = db.query(Job).filter(job.name == TESTNAME).first()
+#     if job is None:
+#         job = Job(
+#             name=TESTNAME,
+#             repo="https://github.com/JustinGuese/SuperSimpleDockerPythonJobScheduler-JobTemplate.git",
+#             cron_schedule="5 4 * * *",
+#         )
+#         db.add(job)
+#         db.commit()
+#         db.refresh(job)
+#     print(job)
+#     runJob(job)

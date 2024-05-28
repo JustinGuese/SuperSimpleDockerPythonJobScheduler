@@ -20,14 +20,19 @@ def isValidCron(cron: str) -> bool:
 
 
 def dbJobToPDJob(job: Job) -> PDJob:
-    return PDJob.model_validate(job.__dict__) if job else None
+    jobdict = job.__dict__
+    if "_sa_instance_state" in jobdict:
+        del jobdict["_sa_instance_state"]
+    if "job_runs" in jobdict:
+        del jobdict["job_runs"]
+    return PDJob.model_validate(jobdict) if job else None
 
 
 ## basic crud for job
 @router.get("/", response_model=list[PDJob])
 def get_jobs(db=Depends(get_db)) -> list[PDJob]:
     jobs = db.query(Job).all()
-    return [PDJob.model_validate(job.__dict__) for job in jobs]
+    return [dbJobToPDJob(job) for job in jobs]
 
 
 def getJobFromDB(db, job_name: str) -> Job:
