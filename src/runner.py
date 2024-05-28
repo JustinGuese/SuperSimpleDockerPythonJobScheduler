@@ -50,41 +50,56 @@ def runJob(job: Job):
     db.commit()
     db.refresh(jobRun)
     jobRunId = job.name.lower() + "_" + str(jobRun.id)
-    check_call(
-        [
-            "docker",
-            "run",
-            "--name",
-            jobRunId,
-            reponame.lower(),
-            "python",
-            job.name + ".py",
-        ],
-        cwd=f"{WORKSPACE}/{reponame}",
-    )
+    try:
+        check_call(
+            [
+                "docker",
+                "run",
+                "--name",
+                jobRunId,
+                reponame.lower(),
+                "python",
+                job.name + ".py",
+            ],
+            cwd=f"{WORKSPACE}/{reponame}",
+        )
+    except Exception as e:
+        jobRun.status = "failed"
+        jobRun.logs = str(e)
+        jobRun.end_time = datetime.utcnow()
+        db.commit()
+        db.refresh(jobRun)
+        return PDJobRun.model_validate(jobRun.__dict__) if jobRun else None
     # get logs
     logs = run(
         ["docker", "logs", jobRunId, "-f"],
         stdout=PIPE,
+        stderr=PIPE,
         cwd=f"{WORKSPACE}/{reponame}",
     )
-    if logs.returncode == 0:
-        jobRun.status = "success"
-        jobRun.logs = logs.stdout.decode("utf-8")
-    else:
+    jobRun.status = "success"
+    jobRun.logs = logs.stdout.decode("utf-8")
+    # Check if the container exited with an error
+    container_status = run(
+        ["docker", "inspect", "-f", "{{.State.ExitCode}}", jobRunId],
+        stdout=PIPE,
+        cwd=f"{WORKSPACE}/{reponame}",
+    )
+    if int(container_status.stdout.decode("utf-8")) != 0:
         jobRun.status = "failed"
-        jobRun.logs = logs.stderr.decode("utf-8")
+        jobRun.logs += container_status.stdout.decode("utf-8").strip()
     jobRun.end_time = datetime.utcnow()
     db.commit()
-    print("logs: ", jobRun.logs)
+    return PDJobRun.model_validate(jobRun.__dict__) if jobRun else None
 
 
 if __name__ == "__main__":
     db = next(get_db())
-    job = db.query(Job).filter(Job.name == "exampleFlow").first()
+    TESTNAME = "exampleFlow"  # errorFlow
+    job = db.query(Job).filter(Job.name == TESTNAME).first()
     if job is None:
         job = Job(
-            name="exampleFlow",
+            name=TESTNAME,
             repo="https://github.com/JustinGuese/SuperSimpleDockerPythonJobScheduler-JobTemplate.git",
             cron_schedule="5 4 * * *",
         )
