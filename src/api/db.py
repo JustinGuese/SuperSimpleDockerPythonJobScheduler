@@ -1,3 +1,4 @@
+import enum
 from datetime import datetime
 from os import environ
 from typing import Optional
@@ -68,12 +69,20 @@ class PDJob(BaseModel):
         orm_mode = True
 
 
+class JobRunState(enum.Enum):
+    success = "success"
+    failed = "failed"
+    running = "running"
+    pending = "pending"
+
+
 class JobRun(Base):
     __tablename__ = "job_runs"
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     job_name = Column(String, ForeignKey("jobs.name"), nullable=False)
     status = Column(
-        Enum("success", "failed", "running", "pending", name="job_status"),
+        Enum(JobRunState),
+        default=JobRunState.pending,
         nullable=False,
     )
     start_time = Column(DateTime, default=datetime.utcnow)
@@ -88,7 +97,7 @@ class JobRun(Base):
 class PDJobRun(BaseModel):
     id: int
     job_name: str
-    status: str
+    status: JobRunState
     start_time: datetime
     end_time: Optional[datetime]
     logs: Optional[str]
