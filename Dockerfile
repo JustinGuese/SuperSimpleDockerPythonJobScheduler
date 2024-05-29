@@ -2,6 +2,7 @@ FROM python:3.11-slim
 RUN mkdir -p /app/api/
 RUN apt update && apt install -y git docker.io && apt clean
 RUN pip install poetry
+RUN poetry config virtualenvs.create false
 WORKDIR /app
 COPY pyproject.toml poetry.lock ./
 RUN poetry install --no-root
