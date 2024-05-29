@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 RUN mkdir -p /app/api/
-RUN apt update && apt install -y git ffmpeg && apt clean
+RUN apt update && apt install -y git docker.io && apt clean
 RUN pip install poetry
 WORKDIR /app
 COPY pyproject.toml poetry.lock ./
