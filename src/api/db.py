@@ -49,6 +49,7 @@ class Job(Base):
     __tablename__ = "jobs"
     name = Column(String, unique=True, primary_key=True, index=True, nullable=False)
     repo = Column(String, nullable=False)
+    workspace = Column(String, nullable=False, default="default")
     description = Column(String, nullable=True)
     on = Column(Boolean, default=True)
     cron_schedule = Column(String, nullable=True)
