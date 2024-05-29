@@ -9,8 +9,8 @@ router = APIRouter(prefix="/api/webhook", tags=["webhook"])
 
 
 @router.post("/")
-def gitWebhook(request: Request, db: Session = Depends(get_db)):
-    req = request.json()
+async def gitWebhook(request: Request, db: Session = Depends(get_db)):
+    req = await request.json()
     branch = req["ref"].split("/")[-1]
     giturl = req["repository"]["html_url"]
     user = req["pusher"]["name"]
