@@ -9,8 +9,7 @@ from cron_validator import CronValidator
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
-from api.db import Job, JobRun, PDJobRun, get_db
-from api.jobs import dbJobToPDJob, getJobFromDB
+from api.db import Job, get_db
 
 router = APIRouter(prefix="/api/webhook", tags=["webhook"])
 

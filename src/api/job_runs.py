@@ -6,8 +6,8 @@ from cron_validator import CronValidator
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from api.db import JobRun, PDJobRun, get_db
+from api.job_runner import runJob
 from api.jobs import dbJobToPDJob, getJobFromDB
-from runner import runJob
 
 router = APIRouter(prefix="/api/job-runs", tags=["job-runs"])
 
